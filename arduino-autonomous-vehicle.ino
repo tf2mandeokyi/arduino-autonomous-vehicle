@@ -101,6 +101,7 @@ int startStoppingMs; // TODO: use this
 StoppingReason stoppingReason = StoppingReason::NONE;
 bool directionChangingMode = false;
 DrivingDirection directionSelection = DrivingDirection::NONE;
+bool directionSelected = false;
 bool manualDrivingMode = false;
 
 void reactIRButton(IRButton receivedButton);
@@ -142,41 +143,37 @@ void reactIRButton(IRButton receivedButton)
     switch(receivedButton)
     {
         case IRButton::BTN_2:
-        {
             if(stoppingReason == StoppingReason::MANUAL)
             {
                 stoppingReason = StoppingReason::NONE;
             }
             break;
-        }
+            
         case IRButton::BTN_4:
-        {
             if(stoppingReason == StoppingReason::AWAITING_DECISION)
             {
                 stoppingReason = StoppingReason::NONE;
                 directionSelection = DrivingDirection::LEFT;
+                directionSelected = true;
             }
             break;
-        }
+            
         case IRButton::BTN_5:
-        {
             manualDrivingMode = true;
             break;
-        }
+            
         case IRButton::BTN_6:
-        {
             if(stoppingReason == StoppingReason::AWAITING_DECISION)
             {
                 stoppingReason = StoppingReason::NONE;
                 directionSelection = DrivingDirection::RIGHT;
+                directionSelected = true;
             }
             break;
-        }
+            
         case IRButton::BTN_8:
-        {
             stoppingReason = StoppingReason::MANUAL;
             break;
-        }
     }
 }
 
@@ -212,17 +209,14 @@ void reactSideMarking(SideMarking sideMarking, int timeMs)
     switch(sideMarking)
     {
         case SideMarking::SLOW:
-        {
             if(!directionChangingMode) drivingSpeed = 50;
             break;
-        }
+            
         case SideMarking::FAST:
-        {
             if(!directionChangingMode) drivingSpeed = 100;
             break;
-        }
+            
         case SideMarking::CHOOSE_DIRECTION:
-        {
             if(!directionChangingMode)
             {
                 stoppingReason = StoppingReason::AWAITING_DECISION;
@@ -231,18 +225,17 @@ void reactSideMarking(SideMarking sideMarking, int timeMs)
             else if(directionChangingMode)
             {
                 directionChangingMode = false;
+                directionSelected = false;
             }
             break;
-        }
+            
         case SideMarking::STOP:
-        {
             if(!directionChangingMode)
             {
                 stoppingReason = StoppingReason::PAUSE;
                 startStoppingMs = timeMs;
             }
             break;
-        }
     }
 }
 
@@ -254,34 +247,39 @@ void reactFrontPathFlag(byte frontPathFlag)
     {
         case 0b000:
         case 0b010:
-        {
             drivingDirection = DrivingDirection::NONE;
             break;
-        }
-        case 0b100:
+
         case 0b110:
-        {
-            drivingDirection = drivingDirection == DrivingDirection::RIGHT ?
-                    DrivingDirection::NONE : drivingDirection;
+            if(directionSelected) 
+            {
+                drivingDirection = directionSelection == DrivingDirection::LEFT ? DrivingDirection::LEFT : DrivingDirection::NONE;
+                break;
+            }
+        case 0b100:
+            drivingDirection = DrivingDirection::LEFT;
             break;
-        }
-        case 0b001:
+
         case 0b011:
-        {
-            drivingDirection = drivingDirection == DrivingDirection::LEFT ?
-                    DrivingDirection::NONE : drivingDirection;
+            if(directionSelected) 
+            {
+                drivingDirection = directionSelection == DrivingDirection::RIGHT ? DrivingDirection::RIGHT : DrivingDirection::NONE;
+                break;
+            }
+        case 0b001:
+            drivingDirection = DrivingDirection::RIGHT;
             break;
-        }
+
         case 0b111:
-        {
-            drivingDirection = directionSelection;
+            drivingDirection = directionSelected ? directionSelection : DrivingDirection::NONE;
             break;
-        }
         case 0b101:
-        {
-            drivingDirection = drivingDirection == DrivingDirection::NONE ?
-                    DrivingDirection::LEFT : drivingDirection;
+            if(directionSelected) 
+            {
+                drivingDirection = directionSelection == DrivingDirection::NONE ? DrivingDirection::LEFT : directionSelection;
+                break;
+            }
+            drivingDirection = DrivingDirection::NONE;
             break;
-        }
     }
 }
