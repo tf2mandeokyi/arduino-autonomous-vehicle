@@ -32,6 +32,7 @@ public:
      **/
     void run(int speed, DrivingDirection direction);
 private:
+    // F: 앞, B: 뒤, L: 왼쪽, R: 오른쪽
     AF_DCMotor motorBL, motorBR, motorFR, motorFL;
 };
 
@@ -85,7 +86,6 @@ private:
 };
 
 // L293D 쉴드 장착 모터 4개
-// F: 앞, B: 뒤, L: 왼쪽, R: 오른쪽
 DCMotorModule motors;
 // 초음파 거리센서 모듈 (HC-SR04)
 UltraSonicSensorModule ultraSonicSensor(22, 23);
@@ -97,7 +97,7 @@ IRreceiverModule irReceiver(33);
 // 최대 100
 int drivingSpeed = 50;
 DrivingDirection drivingDirection = DrivingDirection::NONE;
-int startStoppingMs;
+int startStoppingMs; // TODO: use this
 StoppingReason stoppingReason = StoppingReason::NONE;
 bool directionChangingMode = false;
 DrivingDirection directionSelection = DrivingDirection::NONE;
@@ -106,7 +106,7 @@ bool manualDrivingMode = false;
 void reactIRButton(IRButton receivedButton);
 void reactManualDrivingIRButton(IRButton receivedButton);
 void reactSideMarking(SideMarking sideMarking, int timeMs);
-DrivingDirection reactFrontPathFlag(byte frontPathFlag);
+void reactFrontPathFlag(byte frontPathFlag);
 
 void setup()
 {}
@@ -125,10 +125,10 @@ void loop()
     // 계산: 마킹 신호 반응
     reactIRButton(receivedButton);
     reactSideMarking(sideMarking, timeMs);
-    DrivingDirection direction = reactFrontPathFlag(frontPathFlag);
+    reactFrontPathFlag(frontPathFlag);
 
     // 출력
-    motors.run(drivingSpeed, drivingDirection);
+    motors.run(stoppingReason == StoppingReason::NONE ? drivingSpeed : 0, drivingDirection);
 }
 
 void reactIRButton(IRButton receivedButton)
@@ -161,7 +161,6 @@ void reactIRButton(IRButton receivedButton)
         case IRButton::BTN_5:
         {
             manualDrivingMode = true;
-            // TODO: 기타 초기화 코드 추가
             break;
         }
         case IRButton::BTN_6:
@@ -176,7 +175,6 @@ void reactIRButton(IRButton receivedButton)
         case IRButton::BTN_8:
         {
             stoppingReason = StoppingReason::MANUAL;
-            // TODO: 기타 초기화 코드 추가
             break;
         }
     }
@@ -189,7 +187,6 @@ void reactManualDrivingIRButton(IRButton receivedButton)
         if(drivingSpeed == 0 && drivingDirection == DrivingDirection::NONE)
         {
             manualDrivingMode = false;
-            // TODO: 기타 초기화 코드 추가
             return;
         }
         drivingSpeed = 0;
@@ -210,21 +207,23 @@ void reactManualDrivingIRButton(IRButton receivedButton)
 
 void reactSideMarking(SideMarking sideMarking, int timeMs)
 {
+    if(manualDrivingMode) return;
+
     switch(sideMarking)
     {
         case SideMarking::SLOW:
         {
-            if(!directionChangingMode && !manualDrivingMode) drivingSpeed = 50;
+            if(!directionChangingMode) drivingSpeed = 50;
             break;
         }
         case SideMarking::FAST:
         {
-            if(!directionChangingMode && !manualDrivingMode) drivingSpeed = 100;
+            if(!directionChangingMode) drivingSpeed = 100;
             break;
         }
         case SideMarking::CHOOSE_DIRECTION:
         {
-            if(!directionChangingMode && !manualDrivingMode)
+            if(!directionChangingMode)
             {
                 stoppingReason = StoppingReason::AWAITING_DECISION;
                 startStoppingMs = timeMs;
@@ -237,7 +236,7 @@ void reactSideMarking(SideMarking sideMarking, int timeMs)
         }
         case SideMarking::STOP:
         {
-            if(!directionChangingMode && !manualDrivingMode)
+            if(!directionChangingMode)
             {
                 stoppingReason = StoppingReason::PAUSE;
                 startStoppingMs = timeMs;
@@ -247,16 +246,42 @@ void reactSideMarking(SideMarking sideMarking, int timeMs)
     }
 }
 
-DrivingDirection reactFrontPathFlag(byte frontPathFlag)
+void reactFrontPathFlag(byte frontPathFlag)
 {
-    // TODO
-    // switch(frontPathFlag)
-    // {
-    //     case 0: // ...
-    //     case 2: // .#.
-    //     {
-    //         return NONE;
-    //     }
-    //     case 
-    // }
+    if(manualDrivingMode) return;
+
+    switch(frontPathFlag)
+    {
+        case 0b000:
+        case 0b010:
+        {
+            drivingDirection = DrivingDirection::NONE;
+            break;
+        }
+        case 0b100:
+        case 0b110:
+        {
+            drivingDirection = drivingDirection == DrivingDirection::RIGHT ?
+                    DrivingDirection::NONE : drivingDirection;
+            break;
+        }
+        case 0b001:
+        case 0b011:
+        {
+            drivingDirection = drivingDirection == DrivingDirection::LEFT ?
+                    DrivingDirection::NONE : drivingDirection;
+            break;
+        }
+        case 0b111:
+        {
+            drivingDirection = directionSelection;
+            break;
+        }
+        case 0b101:
+        {
+            drivingDirection = drivingDirection == DrivingDirection::NONE ?
+                    DrivingDirection::LEFT : drivingDirection;
+            break;
+        }
+    }
 }
