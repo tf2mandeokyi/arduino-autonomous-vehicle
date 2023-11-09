@@ -5,18 +5,21 @@
 
 enum class IRButton : byte
 {
-    BTN_1, BTN_2, BTN_3, BTN_4, BTN_5, BTN_6, BTN_7, BTN_8, BTN_9,
+    CH_MINUS, CH, CH_PLUS,
+    PREV, NEXT, PLAY_PAUSE,
+    MINUS, PLUS, EQ, PLUS100, PLUS200,
+    BTN_1, BTN_2, BTN_3, BTN_4, BTN_5, BTN_6, BTN_7, BTN_8, BTN_9, BTN_0,
     NOTHING
 };
 
 enum class SideMarking : byte
 {
-    SLOW, FAST, CHOOSE_DIRECTION, STOP, NOTHING
+    NOTHING, SLOW, FAST, CHOOSE_DIRECTION, STOP
 };
 
 enum class DrivingDirection : byte
 {
-    LEFT, NONE, RIGHT
+    NONE, LEFT, RIGHT
 };
 
 enum class StoppingReason : byte

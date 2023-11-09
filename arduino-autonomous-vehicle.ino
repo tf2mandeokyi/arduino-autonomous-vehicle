@@ -19,10 +19,11 @@ DrivingDirection directionSelection = DrivingDirection::NONE;
 bool directionSelected = false;
 bool manualDrivingMode = false;
 
-void reactIRButton(IRButton receivedButton);
-void reactManualDrivingIRButton(IRButton receivedButton);
-void reactSideMarking(SideMarking sideMarking, int timeMs);
-void reactFrontPathFlag(byte frontPathFlag);
+void handleIRButton(IRButton receivedButton);
+void handleManualDrivingIRButton(IRButton receivedButton);
+void handleSideMarking(SideMarking sideMarking, int timeMs);
+void handleFrontPathFlag(byte frontPathFlag);
+void handleStoppingExpire();
 
 void setup()
 {}
@@ -39,19 +40,20 @@ void loop()
     SideMarking sideMarking = lineTracker.readSideMarking();
 
     // 계산: 마킹 신호 반응
-    reactIRButton(receivedButton);
-    reactSideMarking(sideMarking, timeMs);
-    reactFrontPathFlag(frontPathFlag);
+    handleIRButton(receivedButton);
+    handleSideMarking(sideMarking, timeMs);
+    handleFrontPathFlag(frontPathFlag);
+    handleStoppingExpire();
 
     // 출력
     motors.run(stoppingReason == StoppingReason::NONE ? drivingSpeed : 0, drivingDirection);
 }
 
-void reactIRButton(IRButton receivedButton)
+void handleIRButton(IRButton receivedButton)
 {
     if(manualDrivingMode)
     {
-        reactManualDrivingIRButton(receivedButton);
+        handleManualDrivingIRButton(receivedButton);
         return;
     }
 
@@ -92,7 +94,7 @@ void reactIRButton(IRButton receivedButton)
     }
 }
 
-void reactManualDrivingIRButton(IRButton receivedButton)
+void handleManualDrivingIRButton(IRButton receivedButton)
 {
     if(receivedButton == IRButton::BTN_5)
     {
@@ -117,7 +119,7 @@ void reactManualDrivingIRButton(IRButton receivedButton)
     }
 }
 
-void reactSideMarking(SideMarking sideMarking, int timeMs)
+void handleSideMarking(SideMarking sideMarking, int timeMs)
 {
     if(manualDrivingMode) return;
 
@@ -154,7 +156,7 @@ void reactSideMarking(SideMarking sideMarking, int timeMs)
     }
 }
 
-void reactFrontPathFlag(byte frontPathFlag)
+void handleFrontPathFlag(byte frontPathFlag)
 {
     if(manualDrivingMode) return;
 
@@ -195,6 +197,34 @@ void reactFrontPathFlag(byte frontPathFlag)
                 break;
             }
             drivingDirection = DrivingDirection::NONE;
+            break;
+    }
+}
+
+void handleStoppingExpire()
+{
+    int timeMs;
+    switch(stoppingReason)
+    {
+        case StoppingReason::MANUAL:
+            break;
+
+        case StoppingReason::AWAITING_DECISION:
+            timeMs = millis();
+            if(timeMs - startStoppingMs >= 7000)
+            {
+                stoppingReason = StoppingReason::NONE;
+                directionSelection = static_cast<DrivingDirection>(random(3));
+                directionSelected = true;
+            }
+            break;
+        
+        case StoppingReason::PAUSE:
+            timeMs = millis();
+            if(timeMs - startStoppingMs >= 5000)
+            {
+                stoppingReason = StoppingReason::NONE;
+            }
             break;
     }
 }
