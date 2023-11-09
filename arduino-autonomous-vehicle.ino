@@ -12,11 +12,10 @@ IRreceiverModule irReceiver(33);
 // 최대 100
 int drivingSpeed = 50;
 DrivingDirection drivingDirection = DrivingDirection::NONE;
-int startStoppingMs; // TODO: use this
+int startStoppingMs;
 StoppingReason stoppingReason = StoppingReason::NONE;
 bool directionChangingMode = false;
 DrivingDirection directionSelection = DrivingDirection::NONE;
-bool directionSelected = false;
 bool manualDrivingMode = false;
 
 void handleIRButton(IRButton receivedButton);
@@ -71,7 +70,6 @@ void handleIRButton(IRButton receivedButton)
             {
                 stoppingReason = StoppingReason::NONE;
                 directionSelection = DrivingDirection::LEFT;
-                directionSelected = true;
             }
             break;
             
@@ -84,7 +82,6 @@ void handleIRButton(IRButton receivedButton)
             {
                 stoppingReason = StoppingReason::NONE;
                 directionSelection = DrivingDirection::RIGHT;
-                directionSelected = true;
             }
             break;
             
@@ -142,7 +139,6 @@ void handleSideMarking(SideMarking sideMarking, int timeMs)
             else if(directionChangingMode)
             {
                 directionChangingMode = false;
-                directionSelected = false;
             }
             break;
             
@@ -168,7 +164,7 @@ void handleFrontPathFlag(byte frontPathFlag)
             break;
 
         case 0b110:
-            if(directionSelected) 
+            if(directionChangingMode) 
             {
                 drivingDirection = directionSelection == DrivingDirection::LEFT ? DrivingDirection::LEFT : DrivingDirection::NONE;
                 break;
@@ -178,7 +174,7 @@ void handleFrontPathFlag(byte frontPathFlag)
             break;
 
         case 0b011:
-            if(directionSelected) 
+            if(directionChangingMode) 
             {
                 drivingDirection = directionSelection == DrivingDirection::RIGHT ? DrivingDirection::RIGHT : DrivingDirection::NONE;
                 break;
@@ -188,10 +184,10 @@ void handleFrontPathFlag(byte frontPathFlag)
             break;
 
         case 0b111:
-            drivingDirection = directionSelected ? directionSelection : DrivingDirection::NONE;
+            drivingDirection = directionChangingMode ? directionSelection : DrivingDirection::NONE;
             break;
         case 0b101:
-            if(directionSelected) 
+            if(directionChangingMode) 
             {
                 drivingDirection = directionSelection == DrivingDirection::NONE ? DrivingDirection::LEFT : directionSelection;
                 break;
@@ -215,7 +211,6 @@ void handleStoppingExpire()
             {
                 stoppingReason = StoppingReason::NONE;
                 directionSelection = static_cast<DrivingDirection>(random(3));
-                directionSelected = true;
             }
             break;
         
