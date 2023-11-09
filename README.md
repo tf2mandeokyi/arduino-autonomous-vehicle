@@ -7,6 +7,7 @@
 | 파일 | 설명 |
 |-|-|
 | `arduino-autonomous-vehicle.ino` | 메인 소스 파일 |
+| `header.h` | 클래스 헤더 파일 |
 | `ir-receiver.ino` | IR 리모컨 수신기 관련 코드 |
 | `line-tracker.ino` | 라인트랙킹 센서 관련 코드 |
 | `motor.ino` | 모터 관련 코드 (L293D) |
