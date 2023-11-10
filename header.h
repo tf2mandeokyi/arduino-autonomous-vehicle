@@ -27,65 +27,65 @@ enum class StoppingReason : byte
     NONE, MANUAL, PAUSE, AWAITING_DECISION
 };
 
-class DCMotorModule
+namespace DCMotorModule
 {
-public:
-    DCMotorModule();
-    ~DCMotorModule();
+    AF_DCMotor motorBL(1);
+    AF_DCMotor motorBR(2);
+    AF_DCMotor motorFR(3);
+    AF_DCMotor motorFL(4);
+
+    void setup();
     /**
      * @param speed 속도; 최소 -100, 최대 100
      **/
     void run(int speed, DrivingDirection direction);
-private:
-    // F: 앞, B: 뒤, L: 왼쪽, R: 오른쪽
-    AF_DCMotor motorBL, motorBR, motorFR, motorFL;
 };
 
-class UltraSonicSensorModule
+namespace UltraSonicSensorModule
 {
-public:
-    UltraSonicSensorModule(int triggerPin, int echoPin);
-    ~UltraSonicSensorModule();
+    const int triggerPin = 22;
+    const int echoPin = 23;
+
+    void setup();
     float measureCm();
-private:
-    const int triggerPin, echoPin;
 };
 
-class TimedBinaryInputStacker
+namespace LineTrackerModule
 {
-public:
-    TimedBinaryInputStacker(int timeoutMs);
-    ~TimedBinaryInputStacker();
-    void insertInput(bool input);
-    int readCount();
-    bool isCountingMode();
-private:
-    bool countingMode, prevInput;
-    const int timeoutMs;
-    int timeSinceLastInputMs, count;
-};
+    class TimedBinaryInputStacker
+    {
+    public:
+        TimedBinaryInputStacker(int timeoutMs);
+        ~TimedBinaryInputStacker();
+        void insertInput(bool input);
+        int readCount();
+        bool isCountingMode();
+    private:
+        bool countingMode, prevInput;
+        const int timeoutMs;
+        int timeSinceLastInputMs, count;
+    };
 
-class LineTrackerModule
-{
-public:
-    LineTrackerModule(int sideLeftPin, int frontLeftPin, int frontPin, int frontRightPin, int sideRightPin);
-    ~LineTrackerModule();
+    const int sideLeftPin = 24;
+    const int frontLeftPin = 26;
+    const int frontPin = 28;
+    const int frontRightPin = 30;
+    const int sideRightPin = 32;
+    TimedBinaryInputStacker leftStacker(500);
+    TimedBinaryInputStacker rightStacker(500);
+
+    void setup();
     byte readFront();
     SideMarking readSideMarking();
-private:
-    const int sideLeftPin, frontLeftPin, frontPin, frontRightPin, sideRightPin;
-    TimedBinaryInputStacker leftStacker, rightStacker;
 };
 
-class IRreceiverModule
+namespace IRreceiverModule
 {
-public:
-    IRreceiverModule(int pin);
-    ~IRreceiverModule();
-    void checkInput();
-    IRButton read();
-private:
-    IRrecv irrecv;
+    IRrecv irrecv(33);
     decode_results results;
     IRButton lastReceived;
+
+    void setup();
+    void checkInput();
+    IRButton read();
 };

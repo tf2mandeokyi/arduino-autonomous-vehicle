@@ -1,8 +1,4 @@
-DCMotorModule::DCMotorModule()
- : motorBL(1), motorBR(2), motorFR(3), motorFL(4)
-{}
-
-DCMotorModule::~DCMotorModule()
+void DCMotorModule::setup()
 {}
 
 void DCMotorModule::run(int speed, DrivingDirection direction)

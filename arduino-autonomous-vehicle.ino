@@ -1,14 +1,5 @@
 #include "header.h"
 
-// L293D 쉴드 장착 모터 4개
-DCMotorModule motors;
-// 초음파 거리센서 모듈 (HC-SR04)
-UltraSonicSensorModule ultraSonicSensor(22, 23);
-// 라인트랙킹 센서 (줄여서 트랙커, tracker) 모듈 (KY-033) 5개
-LineTrackerModule lineTracker(24, 26, 28, 30, 32);
-// IR 리모컨 수신 센서 모듈 (Receiver Diode)
-IRreceiverModule irReceiver(33);
-
 // 최대 100
 int drivingSpeed = 50;
 DrivingDirection drivingDirection = DrivingDirection::NONE;
@@ -25,18 +16,23 @@ void handleFrontPathFlag(byte frontPathFlag);
 void handleStoppingExpire();
 
 void setup()
-{}
+{
+    DCMotorModule::setup();
+    UltraSonicSensorModule::setup();
+    LineTrackerModule::setup();
+    IRreceiverModule::setup();
+}
 
 void loop()
 {
     int timeMs = millis();
 
     // 입력
-    irReceiver.checkInput();
-    IRButton receivedButton = irReceiver.read();
-    int distance = ultraSonicSensor.measureCm();
-    byte frontPathFlag = lineTracker.readFront();
-    SideMarking sideMarking = lineTracker.readSideMarking();
+    IRreceiverModule::checkInput();
+    IRButton receivedButton = IRreceiverModule::read();
+    int distance = UltraSonicSensorModule::measureCm();
+    byte frontPathFlag = LineTrackerModule::readFront();
+    SideMarking sideMarking = LineTrackerModule::readSideMarking();
 
     // 계산: 마킹 신호 반응
     handleIRButton(receivedButton);
@@ -45,7 +41,7 @@ void loop()
     handleStoppingExpire();
 
     // 출력
-    motors.run(stoppingReason == StoppingReason::NONE ? drivingSpeed : 0, drivingDirection);
+    DCMotorModule::run(stoppingReason == StoppingReason::NONE ? drivingSpeed : 0, drivingDirection);
 }
 
 void handleIRButton(IRButton receivedButton)
@@ -133,6 +129,7 @@ void handleSideMarking(SideMarking sideMarking, int timeMs)
         case SideMarking::CHOOSE_DIRECTION:
             if(!directionChangingMode)
             {
+                directionChangingMode = true;
                 stoppingReason = StoppingReason::AWAITING_DECISION;
                 startStoppingMs = timeMs;
             }
