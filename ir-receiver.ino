@@ -6,8 +6,15 @@ void IRreceiverModule::setup()
 
 void IRreceiverModule::checkInput()
 {
-    irrecv.decode(&results);
-    lastReceived = static_cast<IRButton>(results.value);
+    if(irrecv.decode())
+    {
+        IRRawDataType rawData = irrecv.decodedIRData.decodedRawData;
+        if(rawData == 0) return;
+        lastReceived = static_cast<IRButton>(rawData);
+
+        // Reset the IR receiver for the next signal
+        irrecv.resume();
+    }
 }
 
 IRButton IRreceiverModule::read()

@@ -1,7 +1,7 @@
 #define LINE_BLACK  0
 #define LINE_WHITE  1
 
-LineTrackerModule::TimedBinaryInputStacker::TimedBinaryInputStacker(int _timeoutMs)
+LineTrackerModule::TimedBinaryInputStacker::TimedBinaryInputStacker(long _timeoutMs)
  : timeoutMs(_timeoutMs), countingMode(false), prevInput(false), count(0)
 {}
 
@@ -25,8 +25,7 @@ void LineTrackerModule::TimedBinaryInputStacker::insertInput(bool input)
     else if(prevInput)
     {
         // input이 true에서 false로 바뀌었을 때
-        int timeMs = millis();
-        timeSinceLastInputMs = timeMs;
+        timeSinceLastInputMs = millis();
         count++;
         prevInput = false;
     }
@@ -36,7 +35,7 @@ void LineTrackerModule::TimedBinaryInputStacker::insertInput(bool input)
         if(!countingMode) return;
 
         // countingMode가 true였을 때
-        int timeMs = millis();
+        long timeMs = millis();
         if(timeMs - timeSinceLastInputMs < timeoutMs) return;
 
         // 지금부터 input이 마지막으로 꺼진 때까지 걸린 시간이 timeoutMs만큼을 넘겼을 때

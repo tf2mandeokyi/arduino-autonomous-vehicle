@@ -5,6 +5,8 @@ void DCMotorModule::run(int speed, DrivingDirection direction)
 {
     speed = constrain(speed, -100, 100);
     speed = map(speed, -100, 100, -255, 255);
+    // Serial.println(static_cast<int>(direction));
+    // Serial.println(speed);
     
     int leftSpeed  = direction == DrivingDirection::LEFT  ? speed / 2 : speed;
     int rightSpeed = direction == DrivingDirection::RIGHT ? speed / 2 : speed;

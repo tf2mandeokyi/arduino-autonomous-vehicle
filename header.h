@@ -2,29 +2,30 @@
 
 #include <AFMotor.h>
 #include <IRremote.h>
+#include <NewPing.h>
 
-enum class IRButton : long int
+enum class IRButton : unsigned long int
 {
     NOTHING     = 0,
 
-    CH_MINUS    = 0xFFA25D,
-    CH          = 0xFF629D,
-    CH_PLUS     = 0xFFE21D,
+    CH_MINUS    = 0xBA45FF00,
+    CH          = 0xB946FF00,
+    CH_PLUS     = 0xB847FF00,
     
-    PREV        = 0xFF22DD,
-    NEXT        = 0xFF02FD,
-    PLAY_PAUSE  = 0xFFC23D,
+    PREV        = 0xB844FF00,
+    NEXT        = 0xBF40FF00,
+    PLAY_PAUSE  = 0xBC43FF00,
     
-    MINUS       = 0xFFE01F,
-    PLUS        = 0xFFA857,
-    EQ          = 0xFF906F,
-    PLUS100     = 0xFF9867,
-    PLUS200     = 0xFFB04F,
+    MINUS       = 0xF807FF00,
+    PLUS        = 0xEA15FF00,
+    EQ          = 0xF609FF00,
+    PLUS100     = 0xE619FF00,
+    PLUS200     = 0xF20DFF00,
 
-    BTN_1 = 0xFF30CF, BTN_2 = 0xFF18E7, BTN_3 = 0xFF7A85,
-    BTN_4 = 0xFF10EF, BTN_5 = 0xFF38C7, BTN_6 = 0xFF5AA5,
-    BTN_7 = 0xFF42BD, BTN_8 = 0xFF4AB5, BTN_9 = 0xFF52AD,
-    BTN_0 = 0xFF6897
+    BTN_1 = 0xF30CFF00, BTN_2 = 0xE718FF00, BTN_3 = 0xA15EFF00,
+    BTN_4 = 0xF708FF00, BTN_5 = 0xE31CFF00, BTN_6 = 0xA55AFF00,
+    BTN_7 = 0xBD42FF00, BTN_8 = 0xAD52FF00, BTN_9 = 0xB54AFF00,
+    BTN_0 = 0xE916FF00
 };
 
 enum class SideMarking : byte
@@ -60,6 +61,8 @@ namespace UltraSonicSensorModule
 {
     const int triggerPin = 22;
     const int echoPin = 23;
+    const int maxDistanceCm = 20;
+    NewPing sonar(triggerPin, echoPin, maxDistanceCm);
 
     void setup();
     float measureCm();
@@ -70,15 +73,16 @@ namespace LineTrackerModule
     class TimedBinaryInputStacker
     {
     public:
-        TimedBinaryInputStacker(int timeoutMs);
+        TimedBinaryInputStacker(long timeoutMs);
         ~TimedBinaryInputStacker();
         void insertInput(bool input);
         int readCount();
         bool isCountingMode();
     private:
         bool countingMode, prevInput;
-        const int timeoutMs;
-        int timeSinceLastInputMs, count;
+        const long timeoutMs;
+        int count;
+        long timeSinceLastInputMs;
     };
 
     const int sideLeftPin = 24;
@@ -86,8 +90,8 @@ namespace LineTrackerModule
     const int frontPin = 28;
     const int frontRightPin = 30;
     const int sideRightPin = 32;
-    TimedBinaryInputStacker leftStacker(500);
-    TimedBinaryInputStacker rightStacker(500);
+    TimedBinaryInputStacker leftStacker(1000);
+    TimedBinaryInputStacker rightStacker(1000);
 
     void setup();
     byte readFront();

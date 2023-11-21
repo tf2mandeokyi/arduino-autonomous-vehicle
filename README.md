@@ -17,3 +17,4 @@
 
 - [Adafruit Motor Shield library](https://github.com/adafruit/Adafruit-Motor-Shield-library) (1.0.1) by Adafruit
 - [IRremote](https://github.com/Arduino-IRremote/Arduino-IRremote) (4.2.0) by shirriff, z3t0, ArminJo
+- [NewPing](https://bitbucket.org/teckel12/arduino-new-ping/wiki/Home) (1.9.7) by Tim Eckel
