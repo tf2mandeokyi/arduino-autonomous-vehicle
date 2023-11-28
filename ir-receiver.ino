@@ -9,11 +9,11 @@ void IRreceiverModule::checkInput()
     if(irrecv.decode())
     {
         IRRawDataType rawData = irrecv.decodedIRData.decodedRawData;
-        if(rawData == 0) return;
-        lastReceived = static_cast<IRButton>(rawData);
-
         // Reset the IR receiver for the next signal
         irrecv.resume();
+
+        if(rawData == 0) return;
+        lastReceived = static_cast<IRButton>(rawData);
     }
 }
 

@@ -26,6 +26,7 @@ void setup()
     IRreceiverModule::setup();
 }
 
+int i = 0;
 void loop()
 {
     timeMs = millis();
@@ -35,17 +36,18 @@ void loop()
     IRButton receivedButton = IRreceiverModule::read();
     int distanceCm = UltraSonicSensorModule::measureCm();
     byte frontPathFlag = LineTrackerModule::readFront();
-    SideMarking sideMarking = LineTrackerModule::readSideMarking();
+    // SideMarking sideMarking = LineTrackerModule::readSideMarking();
 
     // 계산: 마킹 신호 반응
     handleIRButton(receivedButton);
-    handleSideMarking(sideMarking);
+    // handleSideMarking(sideMarking);
     handleFrontPathFlag(frontPathFlag);
     handleStoppingExpire();
 
     // 출력
+    // Serial.println(distanceCm);
     int speed = drivingSpeed;
-    if(distanceCm < 8 || stoppingReason != StoppingReason::NONE)
+    if(distanceCm != 0 && distanceCm < 8 || stoppingReason != StoppingReason::NONE)
     {
         // 앞에 장애물이 있거나 정지 사유가 존재할 경우
         speed = 0;
@@ -113,27 +115,20 @@ void handleManualDrivingIRButton(IRButton receivedButton)
         }
         drivingSpeed = 0;
         drivingDirection = DrivingDirection::NONE;
-        Serial.println("Stopping!");
+        Serial.println("Stopped!");
+        return;
     }
 
-    bool buttonSuccess = false;
     switch(receivedButton)
     {
-        case IRButton::BTN_1: case IRButton::BTN_2: case IRButton::BTN_3: drivingSpeed =  100; buttonSuccess = true; break;
-        case IRButton::BTN_7: case IRButton::BTN_8: case IRButton::BTN_9: drivingSpeed = -100; buttonSuccess = true; break;
+        case IRButton::BTN_1: case IRButton::BTN_2: case IRButton::BTN_3: drivingSpeed =  100; break;
+        case IRButton::BTN_7: case IRButton::BTN_8: case IRButton::BTN_9: drivingSpeed = -100; break;
     }
     switch(receivedButton)
     {
-        case IRButton::BTN_1: case IRButton::BTN_7: drivingDirection = DrivingDirection::LEFT ; buttonSuccess = true; break;
-        case IRButton::BTN_2: case IRButton::BTN_8: drivingDirection = DrivingDirection::NONE ; buttonSuccess = true; break;
-        case IRButton::BTN_3: case IRButton::BTN_9: drivingDirection = DrivingDirection::RIGHT; buttonSuccess = true; break;
-    }
-    if(buttonSuccess)
-    {
-        Serial.print("Changing direction and speed to: speed=");
-        Serial.print(drivingSpeed);
-        Serial.print(", direction=");
-        Serial.println(static_cast<byte>(drivingDirection));
+        case IRButton::BTN_1: case IRButton::BTN_7: drivingDirection = DrivingDirection::LEFT ; break;
+        case IRButton::BTN_2: case IRButton::BTN_8: drivingDirection = DrivingDirection::NONE ; break;
+        case IRButton::BTN_3: case IRButton::BTN_9: drivingDirection = DrivingDirection::RIGHT; break;
     }
 }
 
@@ -144,15 +139,19 @@ void handleSideMarking(SideMarking sideMarking)
     switch(sideMarking)
     {
         case SideMarking::SLOW:
-            if(!directionChangingMode) drivingSpeed = 100;
-            Serial.print("Read slow marking; driving speed is now ");
-            Serial.println(drivingSpeed);
+            if(!directionChangingMode)
+            {
+                drivingSpeed = 100;
+                Serial.println("Read slow marking");
+            }
             break;
             
         case SideMarking::FAST:
-            if(!directionChangingMode) drivingSpeed = 100;
-            Serial.print("Read fast marking; driving speed is now ");
-            Serial.println(drivingSpeed);
+            if(!directionChangingMode) 
+            {
+                drivingSpeed = 100;
+                Serial.println("Read fast marking");
+            }
             break;
             
         case SideMarking::CHOOSE_DIRECTION:
@@ -165,7 +164,7 @@ void handleSideMarking(SideMarking sideMarking)
             else if(directionChangingMode)
             {
                 directionChangingMode = false;
-                Serial.println("Read direction marking again; disabling direction changing mode...");
+                Serial.println("Read direction marking again; disabled direction changing mode");
             }
             break;
             
@@ -235,15 +234,15 @@ void handleStoppingExpire()
         case StoppingReason::AWAITING_DECISION:
             if(timeMs - startStoppingMs >= 7000)
             {
-                Serial.println("Can't wait longer than this! 7s passed, choosing random direction...");
                 selectDirection(static_cast<DrivingDirection>(random(3)));
+                Serial.println("Can't wait longer than this! 7s passed, chose random direction...");
             }
             break;
         
         case StoppingReason::PAUSE:
             if(timeMs - startStoppingMs >= 5000)
             {
-                Serial.println("Waited long enough! Driving continue");
+                Serial.println("Waited long enough! Will continue driving");
                 stoppingReason = StoppingReason::NONE;
             }
             break;
@@ -272,4 +271,5 @@ void selectDirection(DrivingDirection direction)
     }
     stoppingReason = StoppingReason::NONE;
     directionChangingMode = true;
+    Serial.println("Enabled direction changing mode");
 }

@@ -83,8 +83,8 @@ SideMarking LineTrackerModule::readSideMarking()
     int sideLeft = digitalRead(sideLeftPin);
     int sideRight = digitalRead(sideRightPin);
 
-    leftStacker.insertInput(sideLeft == LINE_BLACK ? true : false);
-    rightStacker.insertInput(sideRight == LINE_BLACK ? true : false);
+    leftStacker.insertInput(sideLeft == LINE_WHITE ? true : false);
+    rightStacker.insertInput(sideRight == LINE_WHITE ? true : false);
 
     if(!leftStacker.isCountingMode() && !rightStacker.isCountingMode())
     {
@@ -100,11 +100,11 @@ SideMarking LineTrackerModule::readSideMarking()
             return SideMarking::FAST;
 
         // 방향 결정 마킹
-        else if(leftCount + rightCount == 3 && (leftCount == 1 || rightCount == 1))
+        else if(leftCount == 2 && rightCount == 2)
             return SideMarking::CHOOSE_DIRECTION;
 
         // 일시정지 마킹
-        else if(leftCount == 2 && rightCount == 2)
+        else if(leftCount == 3 && rightCount == 3)
             return SideMarking::STOP;
 
         return SideMarking::NOTHING;
