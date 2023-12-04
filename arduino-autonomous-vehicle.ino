@@ -45,9 +45,8 @@ void loop()
     handleStoppingExpire();
 
     // 출력
-    // Serial.println(distanceCm);
     int speed = drivingSpeed;
-    if(distanceCm != 0 && distanceCm < 8 || stoppingReason != StoppingReason::NONE)
+    if(distanceCm < 8 || stoppingReason != StoppingReason::NONE)
     {
         // 앞에 장애물이 있거나 정지 사유가 존재할 경우
         speed = 0;

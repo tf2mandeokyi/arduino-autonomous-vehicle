@@ -6,9 +6,11 @@ void DCMotorModule::run(int speed, DrivingDirection direction)
     static int prevSpeed;
     static DrivingDirection prevDirection;
     if(prevSpeed == speed && prevDirection == direction) return;
+    prevSpeed = speed;
+    prevDirection = direction;
     
     Serial.print("Changing direction and speed to: speed=");
-    Serial.print(drivingSpeed);
+    Serial.print(speed);
     Serial.print(", direction=");
     switch(direction)
     {
@@ -16,8 +18,6 @@ void DCMotorModule::run(int speed, DrivingDirection direction)
         case DrivingDirection::NONE:  Serial.println("NONE(STRAIGHT)");  break;
         case DrivingDirection::RIGHT: Serial.println("RIGHT"); break;
     }
-    prevSpeed = speed;
-    prevDirection = direction;
 
     speed = constrain(speed, -100, 100);
     speed = map(speed, -100, 100, -255, 255);

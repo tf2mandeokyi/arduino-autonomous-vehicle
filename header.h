@@ -61,7 +61,7 @@ namespace UltraSonicSensorModule
 {
     const int triggerPin = 22;
     const int echoPin = 23;
-    const int maxDistanceCm = 100;
+    const int maxDistanceCm = 200;
     NewPing sonar(triggerPin, echoPin, maxDistanceCm);
 
     void setup();
