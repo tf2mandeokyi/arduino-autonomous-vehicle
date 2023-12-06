@@ -27,6 +27,7 @@ void setup()
 }
 
 int i = 0;
+long frontMarkingLastChecked = millis();
 void loop()
 {
     timeMs = millis();
@@ -41,17 +42,22 @@ void loop()
     // 계산: 마킹 신호 반응
     handleIRButton(receivedButton);
     // handleSideMarking(sideMarking);
-    handleFrontPathFlag(frontPathFlag);
+    if(timeMs - frontMarkingLastChecked >= 300)
+    {
+        handleFrontPathFlag(frontPathFlag);
+        frontMarkingLastChecked = timeMs;
+    }
     handleStoppingExpire();
 
     // 출력
     int speed = drivingSpeed;
-    if(distanceCm < 8 || stoppingReason != StoppingReason::NONE)
+    if((distanceCm < 8 || stoppingReason != StoppingReason::NONE) && !manualDrivingMode)
     {
         // 앞에 장애물이 있거나 정지 사유가 존재할 경우
         speed = 0;
     }
     DCMotorModule::run(speed, drivingDirection);
+    digitalWrite(48, manualDrivingMode);
 }
 
 void handleIRButton(IRButton receivedButton)

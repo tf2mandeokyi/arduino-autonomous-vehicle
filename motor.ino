@@ -9,7 +9,7 @@ void DCMotorModule::run(int speed, DrivingDirection direction)
     prevSpeed = speed;
     prevDirection = direction;
     
-    Serial.print("Changing direction and speed to: speed=");
+    Serial.print("speed=");
     Serial.print(speed);
     Serial.print(", direction=");
     switch(direction)
@@ -25,11 +25,11 @@ void DCMotorModule::run(int speed, DrivingDirection direction)
     int leftSpeed = speed, rightSpeed = speed;
     if(direction == DrivingDirection::LEFT)
     {
-        rightSpeed = -speed;
+        leftSpeed = -speed;
     }
     else if(direction == DrivingDirection::RIGHT)
     {
-        leftSpeed = -speed;
+        rightSpeed = -speed;
     }
     
     // int leftSpeed  = direction == DrivingDirection::RIGHT ? speed / 4 : speed;
