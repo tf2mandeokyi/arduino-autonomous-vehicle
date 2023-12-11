@@ -1,12 +1,19 @@
 #include "header.h"
 
 // 최대 100
-int drivingSpeed = 100;
+const int SPEED = 100;
+int drivingSpeed = SPEED;
 DrivingDirection drivingDirection = DrivingDirection::NONE;
-int startStoppingMs;
+
+DrivingDirection turningMode = DrivingDirection::NONE;
+long turningStartMs = 0;
+
+long startStoppingMs;
 StoppingReason stoppingReason = StoppingReason::NONE;
+
 bool directionChangingMode = false;
 DrivingDirection directionSelection = DrivingDirection::NONE;
+
 bool manualDrivingMode = false;
 long timeMs;
 
@@ -35,29 +42,64 @@ void loop()
     // 입력
     IRreceiverModule::checkInput();
     IRButton receivedButton = IRreceiverModule::read();
-    int distanceCm = UltraSonicSensorModule::measureCm();
+    int distanceCm = 10; //UltraSonicSensorModule::measureCm();
     byte frontPathFlag = LineTrackerModule::readFront();
     // SideMarking sideMarking = LineTrackerModule::readSideMarking();
 
     // 계산: 마킹 신호 반응
     handleIRButton(receivedButton);
     // handleSideMarking(sideMarking);
-    if(timeMs - frontMarkingLastChecked >= 300)
+    if(timeMs - frontMarkingLastChecked >= 150)
     {
         handleFrontPathFlag(frontPathFlag);
         frontMarkingLastChecked = timeMs;
     }
     handleStoppingExpire();
 
+    if(turningMode != DrivingDirection::NONE && timeMs - turningStartMs >= 0)
+    {
+        long delta = timeMs - turningStartMs;
+        if(delta <= 400)
+        {
+            drivingSpeed = -SPEED;
+        }
+        else if(delta <= 800)
+        {
+            drivingSpeed = SPEED;
+            drivingDirection = turningMode;
+        }
+        else
+        {
+            drivingSpeed = SPEED;
+            drivingDirection = DrivingDirection::NONE;
+            turningMode = DrivingDirection::NONE;
+        }
+    }
+
     // 출력
+    static StoppingReason prevStop = StoppingReason::NONE;
     int speed = drivingSpeed;
     if((distanceCm < 8 || stoppingReason != StoppingReason::NONE) && !manualDrivingMode)
     {
+        if(prevStop != stoppingReason)
+        {
+            prevStop = stoppingReason;
+            switch(stoppingReason)
+            {
+                case StoppingReason::NONE: Serial.println("Stopping reason: NONE"); break;
+                case StoppingReason::MANUAL: Serial.println("Stopping reason: MANUAL"); break;
+                case StoppingReason::PAUSE: Serial.println("Stopping reason: PAUSE"); break;
+                case StoppingReason::AWAITING_DECISION: Serial.println("Stopping reason: AWAITING_DECISION"); break;
+            }
+        }
         // 앞에 장애물이 있거나 정지 사유가 존재할 경우
         speed = 0;
     }
+    else
+    {
+        prevStop = StoppingReason::NONE;
+    }
     DCMotorModule::run(speed, drivingDirection);
-    digitalWrite(48, manualDrivingMode);
 }
 
 void handleIRButton(IRButton receivedButton)
@@ -115,6 +157,7 @@ void handleManualDrivingIRButton(IRButton receivedButton)
         if(drivingSpeed == 0 && drivingDirection == DrivingDirection::NONE)
         {
             manualDrivingMode = false;
+            drivingSpeed = SPEED;
             Serial.println("Manual driving disabled");
             return;
         }
@@ -126,8 +169,8 @@ void handleManualDrivingIRButton(IRButton receivedButton)
 
     switch(receivedButton)
     {
-        case IRButton::BTN_1: case IRButton::BTN_2: case IRButton::BTN_3: drivingSpeed =  100; break;
-        case IRButton::BTN_7: case IRButton::BTN_8: case IRButton::BTN_9: drivingSpeed = -100; break;
+        case IRButton::BTN_1: case IRButton::BTN_2: case IRButton::BTN_3: drivingSpeed =  SPEED; break;
+        case IRButton::BTN_7: case IRButton::BTN_8: case IRButton::BTN_9: drivingSpeed = -SPEED; break;
     }
     switch(receivedButton)
     {
@@ -146,7 +189,7 @@ void handleSideMarking(SideMarking sideMarking)
         case SideMarking::SLOW:
             if(!directionChangingMode)
             {
-                drivingSpeed = 100;
+                drivingSpeed = SPEED;
                 Serial.println("Read slow marking");
             }
             break;
@@ -154,7 +197,7 @@ void handleSideMarking(SideMarking sideMarking)
         case SideMarking::FAST:
             if(!directionChangingMode) 
             {
-                drivingSpeed = 100;
+                drivingSpeed = SPEED;
                 Serial.println("Read fast marking");
             }
             break;
@@ -188,35 +231,50 @@ void handleFrontPathFlag(byte frontPathFlag)
 {
     if(manualDrivingMode) return;
 
+    Serial.println(frontPathFlag, 2);
     switch(frontPathFlag)
     {
         case 0b000:
         case 0b010:
             drivingDirection = DrivingDirection::NONE;
+            drivingSpeed = SPEED;
             break;
 
         case 0b110:
             if(directionChangingMode) 
             {
                 drivingDirection = directionSelection == DrivingDirection::LEFT ? DrivingDirection::LEFT : DrivingDirection::NONE;
-                break;
             }
+            break;
         case 0b100:
-            drivingDirection = DrivingDirection::LEFT;
+            // drivingDirection = DrivingDirection::LEFT;
+            // drivingDirection = DrivingDirection::RIGHT;
+            // drivingSpeed = -SPEED;
+            turningMode = DrivingDirection::LEFT;
+            turningStartMs = timeMs;
             break;
 
         case 0b011:
             if(directionChangingMode) 
             {
                 drivingDirection = directionSelection == DrivingDirection::RIGHT ? DrivingDirection::RIGHT : DrivingDirection::NONE;
-                break;
             }
+            break;
         case 0b001:
-            drivingDirection = DrivingDirection::RIGHT;
+            // drivingDirection = DrivingDirection::RIGHT;
+            // drivingDirection = DrivingDirection::LEFT;
+            // drivingSpeed = -SPEED;
+            turningMode = DrivingDirection::RIGHT;
+            turningStartMs = timeMs;
             break;
 
         case 0b111:
-            drivingDirection = directionChangingMode ? directionSelection : DrivingDirection::NONE;
+            if(directionChangingMode)
+            {
+                drivingDirection = directionSelection;
+                break;
+            }
+            drivingDirection = DrivingDirection::NONE;
             break;
         case 0b101:
             if(directionChangingMode) 

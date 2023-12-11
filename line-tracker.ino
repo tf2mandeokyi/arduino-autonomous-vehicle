@@ -72,9 +72,9 @@ byte LineTrackerModule::readFront()
     int frontRight = digitalRead(frontRightPin);
 
     byte result = 0;
-    if(frontLeft  == LINE_BLACK) result |= 4;
-    if(front      == LINE_BLACK) result |= 2;
-    if(frontRight == LINE_BLACK) result |= 1;
+    if(frontLeft  == LINE_WHITE) result |= 4;
+    if(front      == LINE_WHITE) result |= 2;
+    if(frontRight == LINE_WHITE) result |= 1;
     return result;
 }
 
