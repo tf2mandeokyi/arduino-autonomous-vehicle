@@ -23,6 +23,8 @@ void handleSideMarking(SideMarking sideMarking);
 void handleFrontPathFlag(byte frontPathFlag);
 void handleStoppingExpire();
 void selectDirection(DrivingDirection direction);
+void setAutoDrivingTurningDirection(DrivingDirection direction);
+void handleAutoDrivingTurningDirection();
 
 void setup()
 {
@@ -42,9 +44,9 @@ void loop()
     // 입력
     IRreceiverModule::checkInput();
     IRButton receivedButton = IRreceiverModule::read();
-    int distanceCm = 10; //UltraSonicSensorModule::measureCm();
+    int distanceCm = 20; // UltraSonicSensorModule::measureCm();
     byte frontPathFlag = LineTrackerModule::readFront();
-    // SideMarking sideMarking = LineTrackerModule::readSideMarking();
+    SideMarking sideMarking = LineTrackerModule::readSideMarking();
 
     // 계산: 마킹 신호 반응
     handleIRButton(receivedButton);
@@ -55,26 +57,7 @@ void loop()
         frontMarkingLastChecked = timeMs;
     }
     handleStoppingExpire();
-
-    if(turningMode != DrivingDirection::NONE && timeMs - turningStartMs >= 0)
-    {
-        long delta = timeMs - turningStartMs;
-        if(delta <= 400)
-        {
-            drivingSpeed = -SPEED;
-        }
-        else if(delta <= 800)
-        {
-            drivingSpeed = SPEED;
-            drivingDirection = turningMode;
-        }
-        else
-        {
-            drivingSpeed = SPEED;
-            drivingDirection = DrivingDirection::NONE;
-            turningMode = DrivingDirection::NONE;
-        }
-    }
+    handleAutoDrivingTurningDirection();
 
     // 출력
     static StoppingReason prevStop = StoppingReason::NONE;
@@ -231,7 +214,6 @@ void handleFrontPathFlag(byte frontPathFlag)
 {
     if(manualDrivingMode) return;
 
-    Serial.println(frontPathFlag, 2);
     switch(frontPathFlag)
     {
         case 0b000:
@@ -247,25 +229,18 @@ void handleFrontPathFlag(byte frontPathFlag)
             }
             break;
         case 0b100:
-            // drivingDirection = DrivingDirection::LEFT;
-            // drivingDirection = DrivingDirection::RIGHT;
-            // drivingSpeed = -SPEED;
-            turningMode = DrivingDirection::LEFT;
-            turningStartMs = timeMs;
+            setAutoDrivingTurningDirection(DrivingDirection::RIGHT);
             break;
 
         case 0b011:
             if(directionChangingMode) 
             {
-                drivingDirection = directionSelection == DrivingDirection::RIGHT ? DrivingDirection::RIGHT : DrivingDirection::NONE;
+                if(directionSelection == DrivingDirection::RIGHT) setAutoDrivingTurningDirection(DrivingDirection::RIGHT);
+                else setAutoDrivingTurningDirection(DrivingDirection::NONE);
             }
             break;
         case 0b001:
-            // drivingDirection = DrivingDirection::RIGHT;
-            // drivingDirection = DrivingDirection::LEFT;
-            // drivingSpeed = -SPEED;
-            turningMode = DrivingDirection::RIGHT;
-            turningStartMs = timeMs;
+            setAutoDrivingTurningDirection(DrivingDirection::LEFT);
             break;
 
         case 0b111:
@@ -335,4 +310,33 @@ void selectDirection(DrivingDirection direction)
     stoppingReason = StoppingReason::NONE;
     directionChangingMode = true;
     Serial.println("Enabled direction changing mode");
+}
+
+void setAutoDrivingTurningDirection(DrivingDirection direction)
+{
+    turningMode = direction;
+    turningStartMs = timeMs;
+}
+
+void handleAutoDrivingTurningDirection()
+{
+    if(turningMode == DrivingDirection::NONE || timeMs - turningStartMs < 0)
+        return;
+
+    long delta = timeMs - turningStartMs;
+    if(delta <= 300)
+    {
+        drivingSpeed = -SPEED;
+    }
+    else if(delta <= 600)
+    {
+        drivingSpeed = SPEED;
+        drivingDirection = turningMode;
+    }
+    else
+    {
+        drivingSpeed = SPEED;
+        drivingDirection = DrivingDirection::NONE;
+        turningMode = DrivingDirection::NONE;
+    }
 }

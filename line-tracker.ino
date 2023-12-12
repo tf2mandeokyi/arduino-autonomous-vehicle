@@ -86,27 +86,32 @@ SideMarking LineTrackerModule::readSideMarking()
     leftStacker.insertInput(sideLeft == LINE_WHITE ? true : false);
     rightStacker.insertInput(sideRight == LINE_WHITE ? true : false);
 
-    if(!leftStacker.isCountingMode() && !rightStacker.isCountingMode())
-    {
-        int leftCount = leftStacker.readCount();
-        int rightCount = rightStacker.readCount();
-        
-        // 감속 마킹
-        if(leftCount + rightCount == 1)
-            return SideMarking::SLOW;
-
-        // 가속 마킹
-        else if(leftCount == 1 && rightCount == 1)
-            return SideMarking::FAST;
-
-        // 방향 결정 마킹
-        else if(leftCount == 2 && rightCount == 2)
-            return SideMarking::CHOOSE_DIRECTION;
-
-        // 일시정지 마킹
-        else if(leftCount == 3 && rightCount == 3)
-            return SideMarking::STOP;
-
+    if(leftStacker.isCountingMode() || rightStacker.isCountingMode())
         return SideMarking::NOTHING;
+    
+    int leftCount = leftStacker.readCount();
+    int rightCount = rightStacker.readCount();
+    if(leftCount != 0 || rightCount != 0)
+    {
+        Serial.println(leftCount);
+        Serial.println(rightCount);
     }
+    
+    // 감속 마킹
+    if(leftCount + rightCount == 1)
+        return SideMarking::SLOW;
+
+    // 가속 마킹
+    else if(leftCount == 1 && rightCount == 1)
+        return SideMarking::FAST;
+
+    // 방향 결정 마킹
+    else if(leftCount == 2 && rightCount == 2)
+        return SideMarking::CHOOSE_DIRECTION;
+
+    // 일시정지 마킹
+    else if(leftCount == 3 && rightCount == 3)
+        return SideMarking::STOP;
+
+    return SideMarking::NOTHING;
 }

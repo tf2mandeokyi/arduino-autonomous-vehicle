@@ -90,8 +90,8 @@ namespace LineTrackerModule
     const int frontPin = 28;
     const int frontRightPin = 30;
     const int sideRightPin = 32;
-    TimedBinaryInputStacker leftStacker(1000);
-    TimedBinaryInputStacker rightStacker(1000);
+    TimedBinaryInputStacker leftStacker(2000);
+    TimedBinaryInputStacker rightStacker(2000);
 
     void setup();
     byte readFront();
